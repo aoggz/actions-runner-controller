@@ -90,6 +90,8 @@ spec:
                   type: object
                 runnerGroup:
                   type: string
+                runnerScaleSetName:
+                  type: string
                 template:
                   description: Required
                   properties:

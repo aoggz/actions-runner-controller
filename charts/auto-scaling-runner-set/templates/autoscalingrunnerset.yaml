@@ -12,6 +12,10 @@ spec:
   runnerGroup: {{ . }}
   {{- end }}
 
+  {{- with .Values.runnerScaleSetName }}
+  runnerScaleSetName: {{ . }}
+  {{- end }}
+  
   {{- if and (or (kindIs "int64" .Values.minRunners) (kindIs "float64" .Values.minRunners)) (or (kindIs "int64" .Values.maxRunners) (kindIs "float64" .Values.maxRunners)) }}
     {{- if gt .Values.minRunners .Values.maxRunners }}
       {{- fail "maxRunners has to be greater or equal to minRunners" }}

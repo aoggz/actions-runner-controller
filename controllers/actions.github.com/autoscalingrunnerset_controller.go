@@ -302,11 +302,14 @@ func (r *AutoscalingRunnerSetReconciler) deleteEphemeralRunnerSets(ctx context.C
 func (r *AutoscalingRunnerSetReconciler) createRunnerScaleSet(ctx context.Context, autoscalingRunnerSet *v1alpha1.AutoscalingRunnerSet, logger logr.Logger) (ctrl.Result, error) {
 	logger.Info("Creating a new runner scale set")
 	actionsClient, err := r.actionsClientFor(ctx, autoscalingRunnerSet)
+	if len(autoscalingRunnerSet.Spec.RunnerScaleSetName) == 0 {
+		autoscalingRunnerSet.Spec.RunnerScaleSetName = autoscalingRunnerSet.Name
+	}
 	if err != nil {
 		logger.Error(err, "Failed to initialize Actions service client for creating a new runner scale set")
 		return ctrl.Result{}, err
 	}
-	runnerScaleSet, err := actionsClient.GetRunnerScaleSet(ctx, autoscalingRunnerSet.Name)
+	runnerScaleSet, err := actionsClient.GetRunnerScaleSet(ctx, autoscalingRunnerSet.Spec.RunnerScaleSetName)
 	if err != nil {
 		logger.Error(err, "Failed to get runner scale set from Actions service")
 		return ctrl.Result{}, err
@@ -327,11 +330,11 @@ func (r *AutoscalingRunnerSetReconciler) createRunnerScaleSet(ctx context.Contex
 		runnerScaleSet, err = actionsClient.CreateRunnerScaleSet(
 			ctx,
 			&actions.RunnerScaleSet{
-				Name:          autoscalingRunnerSet.Name,
+				Name:          autoscalingRunnerSet.Spec.RunnerScaleSetName,
 				RunnerGroupId: runnerGroupId,
 				Labels: []actions.Label{
 					{
-						Name: autoscalingRunnerSet.Name,
+						Name: autoscalingRunnerSet.Spec.RunnerScaleSetName,
 						Type: "System",
 					},
 				},
@@ -388,7 +391,7 @@ func (r *AutoscalingRunnerSetReconciler) updateRunnerScaleSetRunnerGroup(ctx con
 		runnerGroupId = int(runnerGroup.ID)
 	}
 
-	updatedRunnerScaleSet, err := actionsClient.UpdateRunnerScaleSet(ctx, runnerScaleSetId, &actions.RunnerScaleSet{Name: autoscalingRunnerSet.Name, RunnerGroupId: runnerGroupId})
+	updatedRunnerScaleSet, err := actionsClient.UpdateRunnerScaleSet(ctx, runnerScaleSetId, &actions.RunnerScaleSet{Name: autoscalingRunnerSet.Spec.RunnerScaleSetName, RunnerGroupId: runnerGroupId})
 	if err != nil {
 		logger.Error(err, "Failed to update runner scale set", "runnerScaleSetId", runnerScaleSetId)
 		return ctrl.Result{}, err
@@ -481,7 +484,7 @@ func (r *AutoscalingRunnerSetReconciler) createAutoScalingListenerForRunnerSet(c
 
 func (r *AutoscalingRunnerSetReconciler) listEphemeralRunnerSets(ctx context.Context, autoscalingRunnerSet *v1alpha1.AutoscalingRunnerSet) (*EphemeralRunnerSets, error) {
 	list := new(v1alpha1.EphemeralRunnerSetList)
-	if err := r.List(ctx, list, client.InNamespace(autoscalingRunnerSet.Namespace), client.MatchingFields{autoscalingRunnerSetOwnerKey: autoscalingRunnerSet.Name}); err != nil {
+	if err := r.List(ctx, list, client.InNamespace(autoscalingRunnerSet.Namespace), client.MatchingFields{autoscalingRunnerSetOwnerKey: autoscalingRunnerSet.Spec.RunnerScaleSetName}); err != nil {
 		return nil, fmt.Errorf("failed to list ephemeral runner sets: %v", err)
 	}
 
