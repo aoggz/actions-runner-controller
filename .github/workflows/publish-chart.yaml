@@ -140,7 +140,7 @@ jobs:
 
       - name: Get Token
         id: get_workflow_token
-        uses: peter-murray/workflow-application-token-action@8e1ba3bf1619726336414f1014e37f17fbadf1db
+        uses: peter-murray/workflow-application-token-action@6a9741bf210c9a93370560585c908161170ecada
         with:
           application_id: ${{ secrets.ACTIONS_ACCESS_APP_ID }}
           application_private_key: ${{ secrets.ACTIONS_ACCESS_PK }}
